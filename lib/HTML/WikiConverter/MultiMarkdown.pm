@@ -144,6 +144,8 @@ The page's C<< <title> >> tag will be turned into a Title metadata item.
 
 =back
 
+Patches for more syntax feature support are welcome.
+
 =head1 METHODS
 
 See L<HTML::WikiConverter> for usage information.

@@ -128,7 +128,7 @@ See L<http://fletcherpenney.net/multimarkdown/> for more information on
 MultiMarkdown.
 
 For now, this module's implementation is incomplete, and it does not support
-every MultiMarkdown feature. Supported features are:
+most MultiMarkdown features. Supported features are:
 
 =over 4
 

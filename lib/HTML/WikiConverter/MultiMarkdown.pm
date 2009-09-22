@@ -5,6 +5,100 @@ use warnings;
 
 our $VERSION = '0.01';
 
+use base 'HTML::WikiConverter::Markdown';
+
+use Params::Validate qw( ARRAYREF );
+
+
+sub rules
+{
+    my $self = shift;
+
+    my $rules = $self->SUPER::rules(@_);
+
+    return
+        { %{$rules},
+          table => { block => 1,
+                     end => \&_table_end,
+                   },
+          tr    => { start       => \&_tr_start,
+                     end         => qq{ |\n},
+                     line_format => 'single'
+                   },
+          td    => { start => \&_td_start,
+                     end   => q{ } },
+          th    => { alias   => 'td', },
+          title => { replace => \&_title },
+        };
+}
+
+sub attributes
+{
+    return
+        ( strip_tags => { type => ARRAYREF, default => [ qw( ~comment script style / ) ] } );
+}
+
+sub _title
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $text = $self->get_elem_contents($node);
+
+    return 'Title: ' . $text;
+}
+
+sub _table_end
+{
+    my $self = shift;
+
+    delete $self->{__row_count__};
+    delete $self->{__th_count__};
+
+    return q{};
+}
+
+
+# This method is first called on the _second_ row, go figure
+sub _tr_start
+{
+    my $self = shift;
+
+    my $start = q{};
+    if ( $self->{__row_count__} == 2 )
+    {
+        $start = '|---' x $self->{__th_count__};
+        $start .= qq{|\n};
+    }
+
+    $self->{__row_count__}++;
+
+    return $start;
+}
+
+# This method is called for the first cell in a table, and before the
+# first call to table or tr start!
+sub _td_start
+{
+    my $self = shift;
+
+    $self->{__row_count__} = 1
+        unless exists $self->{__row_count__};
+
+    if ( $self->{__row_count__} == 1 )
+    {
+        if ( exists $self->{__th_count__} )
+        {
+            $self->{__th_count__}++;
+        }
+        else
+        {
+            $self->{__th_count__} = 1;
+        }
+    }
+
+    return '| ';
+}
 
 1;
 
@@ -14,23 +108,45 @@ __END__
 
 =head1 NAME
 
-HTML::WikiConverter::MultiMarkdown - The fantastic new HTML::WikiConverter::MultiMarkdown!
+HTML::WikiConverter::MultiMarkdown - Converts HTML to MultiMarkdown syntax
 
 =head1 SYNOPSIS
 
-XXX - change this!
-
     use HTML::WikiConverter::MultiMarkdown;
 
-    my $foo = HTML::WikiConverter::MultiMarkdown->new();
+    my $converter = HTML::WikiConverter::MultiMarkdown->new();
 
-    ...
+    my $markdown = $converter->html2wiki( html => $html );
 
 =head1 DESCRIPTION
 
+This is a subclass of L<HTML::WikiConverter::Markdown> that output
+MultiMarkdown syntax. The most notable extension MultiMarkdown provides for
+original Markdown is support for tables.
+
+See L<http://fletcherpenney.net/multimarkdown/> for more information on
+MultiMarkdown.
+
+For now, this module's implementation is incomplete, and it does not support
+every MultiMarkdown feature. Supported features are:
+
+=over 4
+
+=item * tables
+
+There is basic support for tables. The first row of a table is always treated
+as the header. There is no support for column or row groups. There is also no
+support for captions or summaries.
+
+=item * metadata
+
+The page's C<< <title> >> tag will be turned into a Title metadata item.
+
+=back
+
 =head1 METHODS
 
-This class provides the following methods
+See L<HTML::WikiConverter> for usage information.
 
 =head1 AUTHOR
 
@@ -38,10 +154,10 @@ Dave Rolsky, E<gt>autarch@urth.orgE<lt>
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-html-wikiconverter-multimarkdown@rt.cpan.org>,
-or through the web interface at L<http://rt.cpan.org>.  I will be
-notified, and then you'll automatically be notified of progress on
-your bug as I make changes.
+Please report any bugs or feature requests to
+C<bug-html-wikiconverter-multimarkdown@rt.cpan.org>, or through the web
+interface at L<http://rt.cpan.org>.  I will be notified, and then you'll
+automatically be notified of progress on your bug as I make changes.
 
 =head1 DONATIONS
 

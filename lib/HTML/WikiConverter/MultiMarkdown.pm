@@ -34,8 +34,12 @@ sub rules
 
 sub attributes
 {
+    my $self = shift;
+
     return
-        ( strip_tags => { type => ARRAYREF, default => [ qw( ~comment script style / ) ] } );
+        { %{ $self->SUPER::attributes() },
+          strip_tags => { type => ARRAYREF, default => [ qw( ~comment script style / ) ] },
+        };
 }
 
 sub _title
